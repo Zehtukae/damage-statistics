@@ -165,7 +165,14 @@ def main():
 
         damage_data = process_damage_data(uploaded_files)
         allowlist = [name.strip() for name in player_names.split(",")] if player_names else None
-        
+
+        # Check for names that do not exist in the allowlist
+        if use_allowlist and allowlist:
+            missing_names = [name for name in allowlist if name not in damage_data]
+            if missing_names:
+                st.warning(f"Warning: The following names do not exist in the data: {', '.join(missing_names)}")
+                allowlist = [name for name in allowlist if name in damage_data]
+
         # Display the formatted damage output
         output = format_damage_output(damage_data, use_allowlist=use_allowlist, allowlist=allowlist)
         st.markdown(output)
@@ -177,7 +184,7 @@ def main():
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Print debug message to the console
-        debug_message = f"Damage report generated at {current_time}\n"
+        debug_message = f"Debug: Damage report generated at {current_time}\n"
         if use_allowlist and allowlist:
             player_damages = []
             total_damage = 0
@@ -185,7 +192,7 @@ def main():
                 player_damage = damage_data[player].total_damage_inflicted if player in damage_data else 0
                 player_damages.append(f"{player}: {player_damage}")
                 total_damage += player_damage
-            debug_message += f"- Players in session: {', '.join(player_damages)} | Total: {total_damage}"
+            debug_message += f"Players in session: {', '.join(player_damages)} | Total: {total_damage}"
         else:
             total_damage = sum(data.total_damage_inflicted for data in damage_data.values())
             debug_message += f"Total damage: {total_damage}"
