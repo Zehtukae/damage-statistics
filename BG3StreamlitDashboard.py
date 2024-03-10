@@ -4,6 +4,7 @@ import numpy as np
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import datetime
 
 class DamageInfo:
     def __init__(self):
@@ -157,6 +158,11 @@ def main():
     use_allowlist = st.checkbox("Use player names allowlist", value=True)
 
     if uploaded_files:
+        # Check for duplicate file names
+        file_names = [file.name for file in uploaded_files]
+        if len(file_names) != len(set(file_names)):
+            st.warning("Warning: Duplicate log files detected.")
+
         damage_data = process_damage_data(uploaded_files)
         allowlist = [name.strip() for name in player_names.split(",")] if player_names else None
         
@@ -167,5 +173,24 @@ def main():
         # Create the dashboard with graphs
         create_dashboard(damage_data, allowlist if use_allowlist else None)
 
+        # Get current time
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Print debug message to the console
+        debug_message = f"Damage report generated at {current_time}\n"
+        if use_allowlist and allowlist:
+            player_damages = []
+            total_damage = 0
+            for player in allowlist:
+                player_damage = damage_data[player].total_damage_inflicted if player in damage_data else 0
+                player_damages.append(f"{player}: {player_damage}")
+                total_damage += player_damage
+            debug_message += f"- Players in session: {', '.join(player_damages)} | Total: {total_damage}"
+        else:
+            total_damage = sum(data.total_damage_inflicted for data in damage_data.values())
+            debug_message += f"Total damage: {total_damage}"
+
+        print(debug_message)
+        
 if __name__ == "__main__":
     main()
