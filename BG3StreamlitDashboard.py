@@ -160,8 +160,9 @@ def main():
     if uploaded_files:
         # Check for duplicate file names
         file_names = [file.name for file in uploaded_files]
-        if len(file_names) != len(set(file_names)):
-            st.warning("Warning: Duplicate log files detected.")
+        duplicate_files = [name for name in set(file_names) if file_names.count(name) > 1]
+        if duplicate_files:
+            st.warning(f"Warning: Duplicate log files detected: {', '.join(duplicate_files)}")
 
         damage_data = process_damage_data(uploaded_files)
         allowlist = [name.strip() for name in player_names.split(",")] if player_names else None
