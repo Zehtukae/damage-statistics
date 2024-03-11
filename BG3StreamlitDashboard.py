@@ -78,9 +78,9 @@ def format_damage_output(damage_data, use_allowlist=False, allowlist=None):
 
         output += f"**{character}** - Total Inflicted: {data.total_damage_inflicted} ({percent_of_total:.2f}%, Offset: {offset_from_target:+.2f}%)\n"
         inflicted_str = ', '.join(f"{t or 'Unknown'}: {d}" for t, d in sorted(data.damage_inflicted_by_type.items(), key=lambda x: x[1], reverse=True) if d > 0)
-        output += f"- **Damage Inflicted:** {inflicted_str}\n"
+        output += f"- **Damage Inflicted ({data.total_damage_inflicted}):** {inflicted_str}\n"
         received_str = ', '.join(f"{t or 'Unknown'}: {d}" for t, d in sorted(data.damage_received_by_type.items(), key=lambda x: x[1], reverse=True) if d > 0)
-        output += f"- **Damage Received:** {received_str}\n\n"
+        output += f"- **Damage Received ({data.total_damage_received}):** {received_str}\n\n"
 
     # Calculate performance statistics and classify character performance
     total_damages = [data.total_damage for data in filtered_damage_data.values()]
@@ -160,8 +160,9 @@ def main():
     if uploaded_files:
         # Check for duplicate file names
         file_names = [file.name for file in uploaded_files]
-        if len(file_names) != len(set(file_names)):
-            st.warning("Warning: Duplicate log files detected.")
+        duplicate_files = [name for name in set(file_names) if file_names.count(name) > 1]
+        if duplicate_files:
+            st.warning(f"Warning: Duplicate log files detected: {', '.join(duplicate_files)}")
 
         damage_data = process_damage_data(uploaded_files)
         allowlist = [name.strip() for name in player_names.split(",")] if player_names else None
