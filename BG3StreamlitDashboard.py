@@ -28,7 +28,7 @@ class DamageInfo:
 def process_damage_data(files):
     """Process damage data from uploaded log files."""
     damage_info = defaultdict(DamageInfo)
-    pattern = re.compile(r"Defender: ([\w\s']+), Attacker: ([\w\s']+), Type: (\w*), Damage: (\d+), Cause: (\w+)")
+    pattern = re.compile(r"Defender: ([\w\s'/\-_\.,\(\)]+), Attacker: ([\w\s'/\-_\.,\(\)]+), Type: (\w*), Damage: (\d+), Cause: (\w+)")
 
     for file in files:
         file_contents = file.read().decode("utf-8")
@@ -133,20 +133,20 @@ def create_dashboard(damage_data, allowlist=None):
     data = []
     for character, info in filtered_damage_data.items():
         for damage_type, damage in info.damage_inflicted_by_type.items():
-            data.append({'Character': character, 'Damage Type': damage_type, 'Damage Inflicted': damage})
+            data.append({'Character': character, 'Damage Type': damage_type, 'Damage Inflicted': damage, 'Damage Received': 0})
         for damage_type, damage in info.damage_received_by_type.items():
-            data.append({'Character': character, 'Damage Type': damage_type, 'Damage Received': damage})
+            data.append({'Character': character, 'Damage Type': damage_type, 'Damage Inflicted': 0, 'Damage Received': damage})
 
     df = pd.DataFrame(data)
 
     st.markdown("### Graphs")
 
     # Create stacked bar chart for damage inflicted by type for each character
-    fig_inflicted_by_type = px.bar(df[df['Damage Inflicted'].notna()], x='Character', y='Damage Inflicted', color='Damage Type', title='Damage Inflicted by Type')
+    fig_inflicted_by_type = px.bar(df, x='Character', y='Damage Inflicted', color='Damage Type', title='Damage Inflicted by Type')
     st.plotly_chart(fig_inflicted_by_type)
 
     # Create stacked bar chart for damage received by type for each character
-    fig_received_by_type = px.bar(df[df['Damage Received'].notna()], x='Character', y='Damage Received', color='Damage Type', title='Damage Received by Type')
+    fig_received_by_type = px.bar(df, x='Character', y='Damage Received', color='Damage Type', title='Damage Received by Type')
     st.plotly_chart(fig_received_by_type)
 
 def main():
