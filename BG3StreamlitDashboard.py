@@ -197,7 +197,7 @@ def main():
 
         # Download button
         output = format_damage_output(damage_data, use_allowlist=use_allowlist, allowlist=allowlist)
-        current_datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        current_datetime = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         markdown_file = io.BytesIO(output.encode())
 
         st.download_button(
@@ -214,8 +214,7 @@ def main():
         create_dashboard(damage_data, allowlist if use_allowlist else None)
 
         # Print debug message to the console
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        debug_message = f"Debug: Damage report generated at {current_time}\n"
+        debug_message = f"Debug: Damage report generated at {current_datetime}\n"
         if use_allowlist and allowlist:
             player_damages = []
             total_damage = 0
