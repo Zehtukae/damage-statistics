@@ -5,6 +5,8 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 import datetime
+import base64
+import io
 
 class DamageInfo:
     def __init__(self):
@@ -162,6 +164,11 @@ def create_dashboard(damage_data, allowlist=None):
     # Create stacked bar chart for damage received by type for each character
     fig_received_by_type = px.bar(df, x='Character', y='Damage Received', color='Damage Type', title='Damage Received by Type')
     st.plotly_chart(fig_received_by_type)
+    
+def get_download_link(content, filename):
+    b64 = base64.b64encode(content.encode()).decode()
+    href = f'<a href="data:file/text;base64,{b64}" download="{filename}">Download {filename}</a>'
+    return href
 
 def main():
     """Main function to run the Streamlit app."""
@@ -188,8 +195,21 @@ def main():
                 st.warning(f"Warning: The following names do not exist in the data: {', '.join(missing_names)}")
                 allowlist = [name for name in allowlist if name in damage_data]
 
-        # Display the formatted damage output
+        # Generate the formatted damage output
         output = format_damage_output(damage_data, use_allowlist=use_allowlist, allowlist=allowlist)
+
+        # Create a BytesIO object and write the markdown content to it
+        markdown_file = io.BytesIO(output.encode())
+
+        # Display the download button
+        st.download_button(
+            label="Download Damage Report",
+            data=markdown_file,
+            file_name="damage_report.md",
+            mime="text/markdown"
+        )
+
+        # Display the formatted damage output
         st.markdown(output)
 
         # Create the dashboard with graphs
