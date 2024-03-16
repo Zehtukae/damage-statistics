@@ -12,6 +12,7 @@ class DamageInfo:
         self.damage_inflicted_by_type = defaultdict(int)
         self.total_damage_received = 0
         self.damage_received_by_type = defaultdict(int)
+        self.friendly_fire = 0
 
     def add_damage_inflicted(self, damage, damage_type):
         self.total_damage_inflicted += damage
@@ -21,11 +22,15 @@ class DamageInfo:
         self.total_damage_received += damage
         self.damage_received_by_type[damage_type] += damage
 
+    def add_friendly_fire(self, damage):
+        self.friendly_fire += damage
+        self.total_damage_inflicted -= damage
+
     @property
     def total_damage(self):
         return self.total_damage_inflicted + self.total_damage_received
 
-def process_damage_data(files):
+def process_damage_data(files, allowlist=None):
     """Process damage data from uploaded log files."""
     damage_info = defaultdict(DamageInfo)
     pattern = re.compile(r"Defender: ([\w\s'/\-_\.,\(\)]+), Attacker: ([\w\s'/\-_\.,\(\)]+), Type: (\w*), Damage: (\d+), Cause: (\w+)")
@@ -39,6 +44,9 @@ def process_damage_data(files):
                 attacker, defender = attacker.strip(), defender.strip()
                 damage_info[attacker].add_damage_inflicted(int(damage), damage_type)
                 damage_info[defender].add_damage_received(int(damage), damage_type)
+
+                if allowlist and attacker in allowlist and defender in allowlist:
+                    damage_info[attacker].add_friendly_fire(int(damage))
 
     return damage_info
 
@@ -80,7 +88,12 @@ def format_damage_output(damage_data, use_allowlist=False, allowlist=None):
         inflicted_str = ', '.join(f"{t or 'Unknown'}: {d}" for t, d in sorted(data.damage_inflicted_by_type.items(), key=lambda x: x[1], reverse=True) if d > 0)
         output += f"- **Damage Inflicted ({data.total_damage_inflicted}):** {inflicted_str}\n"
         received_str = ', '.join(f"{t or 'Unknown'}: {d}" for t, d in sorted(data.damage_received_by_type.items(), key=lambda x: x[1], reverse=True) if d > 0)
-        output += f"- **Damage Received ({data.total_damage_received}):** {received_str}\n\n"
+        output += f"- **Damage Received ({data.total_damage_received}):** {received_str}\n"
+        
+        if data.friendly_fire > 0:
+            output += f"- **Friendly Fire:** {data.friendly_fire}\n"
+        
+        output += "\n"
 
     # Calculate performance statistics and classify character performance
     total_damages = [data.total_damage for data in filtered_damage_data.values()]
@@ -164,8 +177,8 @@ def main():
         if duplicate_files:
             st.warning(f"Warning: Duplicate log files detected: {', '.join(duplicate_files)}")
 
-        damage_data = process_damage_data(uploaded_files)
         allowlist = [name.strip() for name in player_names.split(",")] if player_names else None
+        damage_data = process_damage_data(uploaded_files, allowlist if use_allowlist else None)
 
         # Check for names that do not exist in the allowlist
         if use_allowlist and allowlist:
@@ -199,6 +212,6 @@ def main():
             debug_message += f"Total damage: {total_damage}"
 
         print(debug_message)
-        
+
 if __name__ == "__main__":
     main()
