@@ -12,7 +12,7 @@ class DamageInfo:
         self.damage_inflicted_by_type = defaultdict(int)
         self.total_damage_received = 0
         self.damage_received_by_type = defaultdict(int)
-        self.friendly_fire = 0
+        self.friendly_fire_by_type = defaultdict(int)
 
     def add_damage_inflicted(self, damage, damage_type):
         self.total_damage_inflicted += damage
@@ -22,8 +22,8 @@ class DamageInfo:
         self.total_damage_received += damage
         self.damage_received_by_type[damage_type] += damage
 
-    def add_friendly_fire(self, damage):
-        self.friendly_fire += damage
+    def add_friendly_fire(self, damage, damage_type):
+        self.friendly_fire_by_type[damage_type] += damage
         self.total_damage_inflicted -= damage
 
     @property
@@ -46,7 +46,7 @@ def process_damage_data(files, allowlist=None):
                 damage_info[defender].add_damage_received(int(damage), damage_type)
 
                 if allowlist and attacker in allowlist and defender in allowlist:
-                    damage_info[attacker].add_friendly_fire(int(damage))
+                    damage_info[attacker].add_friendly_fire(int(damage), damage_type)
 
     return damage_info
 
@@ -90,8 +90,9 @@ def format_damage_output(damage_data, use_allowlist=False, allowlist=None):
         received_str = ', '.join(f"{t or 'Unknown'}: {d}" for t, d in sorted(data.damage_received_by_type.items(), key=lambda x: x[1], reverse=True) if d > 0)
         output += f"- **Damage Received ({data.total_damage_received}):** {received_str}\n"
         
-        if data.friendly_fire > 0:
-            output += f"- **Friendly Fire:** {data.friendly_fire}\n"
+        if sum(data.friendly_fire_by_type.values()) > 0:
+            friendly_fire_str = ', '.join(f"{t or 'Unknown'}: {d}" for t, d in sorted(data.friendly_fire_by_type.items(), key=lambda x: x[1], reverse=True) if d > 0)
+            output += f"- **Friendly Fire ({sum(data.friendly_fire_by_type.values())}):** {friendly_fire_str}\n"
         
         output += "\n"
 
