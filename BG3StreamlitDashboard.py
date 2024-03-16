@@ -195,17 +195,15 @@ def main():
                 st.warning(f"Warning: The following names do not exist in the data: {', '.join(missing_names)}")
                 allowlist = [name for name in allowlist if name in damage_data]
 
-        # Generate the formatted damage output
+        # Download button
         output = format_damage_output(damage_data, use_allowlist=use_allowlist, allowlist=allowlist)
-
-        # Create a BytesIO object and write the markdown content to it
+        current_datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         markdown_file = io.BytesIO(output.encode())
 
-        # Display the download button
         st.download_button(
             label="Download Damage Report",
             data=markdown_file,
-            file_name="damage_report.md",
+            file_name=f"damage_report_{current_datetime}.md",
             mime="text/markdown"
         )
 
@@ -215,10 +213,8 @@ def main():
         # Create the dashboard with graphs
         create_dashboard(damage_data, allowlist if use_allowlist else None)
 
-        # Get current time
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
         # Print debug message to the console
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         debug_message = f"Debug: Damage report generated at {current_time}\n"
         if use_allowlist and allowlist:
             player_damages = []
